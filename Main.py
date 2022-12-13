@@ -29,15 +29,13 @@ Dnews_dict = {}
 CSnews_dict = {}
 Lnews_dict = {}
 
-#Новости крипты
+#Курсы крипты
 btc_dict = {}
 eth_dict = {}
 ltc_dict = {}
 
-#Курсы крипты
-CurBTC_dict = {}
-CurETH_dict = {}
-CurLTC_dict = {}
+#Новости крипты
+CryptoNew_dict = {}
 
 #Dp = диспетчер для комманд / Dispatcherfor command
 dp = Dispatcher (bot)
@@ -110,7 +108,7 @@ worlds = KeyboardButton('/Worlds 🤸‍♀️')
 LnewsMenu = ReplyKeyboardMarkup(resize_keyboard=True).row(newsL,worlds,backCyber)
 
 #Crypto меню для криптовалют
-cryptonews = KeyboardButton('/cryptos ✉️')
+cryptonews = KeyboardButton('/cryptoNew ✉️')
 btc = KeyboardButton('/BTC 🪬')
 eth = KeyboardButton('/ETH 🔷')
 ltc = KeyboardButton('/LTC 🧿')
@@ -480,10 +478,36 @@ async def neud (message: types.Message):
 
 """ -----------------------------------------------------------------------------------------------------------------------------------"""
 #Crypto меню
-
 @dp.message_handler (commands=["cryptos"])
 async def cryptocurriens (message: types.Message):
-    await bot.send_message(message.from_user.id,"Поговорим за money 😎", reply_markup=cryptoMenu)
+    await bot.send_message(message.from_user.id,"Поговорим за деньги 😎", reply_markup=cryptoMenu)
+
+@dp.message_handler (commands=["cryptoNew"])
+async def cryptocurriens (message: types.Message):
+    header = {
+    'user-agent':"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.167 YaBrowser/22.7.5.940 Yowser/2.5 Safari/537.36"
+    }
+    url = ("https://cryptonews.net/ru/")
+    r = requests.get (url=url)
+    soup = BeautifulSoup (r.text, "lxml")
+    rounded_block = soup.find_all (class_="col-xs-12 col-sm")
+    for round in rounded_block:
+        round_title = round.find(class_='desc col-xs')
+        round_data = round.find (class_="datetime flex middle-xs")
+        round_link = round.find (class_="desc col-xs")
+        round_url = f'https://cryptonews.net/ru/{round_link.get("href")}'
+        CryptoNew_dict [round_title] = {
+            "time": round_data,
+            "title": round_title,
+            "url": round_url }
+
+    with open ("CryptoNew_dict.json","w",encoding='utf-8') as file:
+        json.dump(CryptoNew_dict, file, indent=4, ensure_ascii=False)
+
+        for k,v in sorted(CryptoNew_dict.items()):
+            news = f"<b>{v['time']}</b>\n"\
+            f"{hlink(v['title'],v['url'])}"
+            await message.answer(news)
 
 
 """ -----------------------------------------------------------------------------------------------------------------------------------"""
@@ -540,18 +564,21 @@ async def bitocNews (message: types.Message):
         "14EU":"Изменение за 14 дней: "+is_14EU.text
     }
     
-    with open ("Lnews_dict.json","w",encoding='utf-8') as file:
-        json.dump(Lnews_dict, file, indent=4, ensure_ascii=False)
+    with open ("btc_dict.json","w",encoding='utf-8') as file:
+        json.dump(btc_dict, file, indent=4, ensure_ascii=False)
 
     for key,value in btc_dict.items():
         nik = f"{hlink(value['title'],value['url'])}\n"
         news = f"<b>{value['time']}</b>\n"\
+        f"{'₿ → ₱ 📊📊📊'}\n"\
         f"<b>{value['valueRU']}</b>\n"\
         f"<b>{value['isoRU']}</b>\n"\
         f"<b>{value['14RU']}</b>\n"\
+        f"{'₿ → $ 📊📊📊'}\n"\
         f"<b>{value['valueDL']}</b>\n"\
         f"<b>{value['isoDL']}</b>\n"\
         f"<b>{value['14DL']}</b>\n"\
+        f"{'₿ → € 📊📊📊'}\n"\
         f"<b>{value['valueEU']}</b>\n"\
         f"<b>{value['isoEU']}</b>\n"\
         f"<b>{value['14EU']}</b>"
@@ -598,17 +625,17 @@ async def bitocNews (message: types.Message):
         "title":"Кликни чтобы узнать больше:)",
         "time":"Котировка за "+time.text,
 
-        "valueRU":"Курс в рублях :"+roundRU.text,
-        "valueDL":"Курс в долларах "+roundDL.text,
-        "valueEU":"Курс в евро  "+roundEU.text,
+        "valueRU":"Курс в рублях: "+roundRU.text,
+        "valueDL":"Курс в долларах: "+roundDL.text,
+        "valueEU":"Курс в евро: "+roundEU.text,
 
-        "isoRU":"Изменение за день "+isoRU.text,
-        "isoDL":"Изменение за день "+isoDL.text,
-       "isoEU":"Изменение за день "+isoEU.text,
+        "isoRU":"Изменение за день: "+isoRU.text,
+        "isoDL":"Изменение за день: "+isoDL.text,
+       "isoEU":"Изменение за день: "+isoEU.text,
 
-        "14RU":"Изменение за 14 дней "+is_14RU.text,
-        "14DL":"Изменение за 14 дней "+is_14DL.text,
-        "14EU":"Изменение за 14 дней "+is_14EU.text
+        "14RU":"Изменение за 14 дней: "+is_14RU.text,
+        "14DL":"Изменение за 14 дней: "+is_14DL.text,
+        "14EU":"Изменение за 14 дней: "+is_14EU.text
     }
     
     with open ("eth_dict.json","w",encoding='utf-8') as file:
@@ -617,22 +644,95 @@ async def bitocNews (message: types.Message):
     for key,value in eth_dict.items():
         nik = f"{hlink(value['title'],value['url'])}\n"
         news = f"<b>{value['time']}</b>\n"\
-        f"{'₿ → ₱ 📊📊📊'}\n"\
+        f"{'🔷 → ₱ 📊📊📊'}\n"\
         f"<u>{value['valueRU']}</u>\n"\
         f"<b>{value['isoRU']}</b>\n"\
         f"<b>{value['14RU']}</b>\n"\
-        f"{'₿ → $ 📊📊📊'}\n"\
+        f"{'🔷 → $ 📊📊📊'}\n"\
         f"<u>{value['valueDL']}</u>\n"\
         f"<b>{value['isoDL']}</b>\n"\
         f"<b>{value['14DL']}</b>\n"\
-        f"{'₿ → € 📊📊📊'}\n"\
+        f"{'🔷 → € 📊📊📊'}\n"\
         f"<u>{value['valueEU']}</u>\n"\
         f"<b>{value['isoEU']}</b>\n"\
         f"<b>{value['14EU']}</b>"
         await message.answer(news)
         await message.answer(nik)
 
-        
+#LTC
+
+@dp.message_handler (commands=["LTC"])
+async def bitocNews (message: types.Message):
+    header = {
+    'user-agent':"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.167 YaBrowser/22.7.5.940 Yowser/2.5 Safari/537.36"
+    }
+    url = ("https://www.vbr.ru/crypto/ltc/")
+    r = requests.get (url=url)
+    soup = BeautifulSoup (r.text, "lxml")
+    rounded_block = soup.find(class_="rates-best-table")
+
+    #распаршиваем табл
+    roundall = rounded_block.select("tr > td")
+
+    #изменение за день
+    isoRU = roundall[2] #isoRU
+    isoDL = roundall[6] #isoDL
+    isoEU = roundall[10] #isoEU
+
+    #курс в рублях/долларах/евро
+    roundRU = roundall[1] #valueRU
+    roundDL = roundall[5] #valueDL
+    roundEU = roundall[9] #valueDL
+
+    #изменение за 14 дней
+    is_14RU = roundall[3] #14RU
+    is_14DL = roundall[7] #14DL
+    is_14EU = roundall[11] #14EU
+
+    #время последней котировка
+    time = soup.find (class_="common-val nowrap") #time
+    
+    #словарь с информацией курса биткойна и его последних изменений
+    ltc_dict [url]= {
+
+        "url":url,
+        "title":"Кликни чтобы узнать больше:)",
+        "time":"Котировка за "+time.text,
+
+        "valueRU":"Курс в рублях: "+roundRU.text,
+        "valueDL":"Курс в долларах: "+roundDL.text,
+        "valueEU":"Курс в евро: "+roundEU.text,
+
+        "isoRU":"Изменение за день: "+isoRU.text,
+        "isoDL":"Изменение за день: "+isoDL.text,
+       "isoEU":"Изменение за день: "+isoEU.text,
+
+        "14RU":"Изменение за 14 дней: "+is_14RU.text,
+        "14DL":"Изменение за 14 дней: "+is_14DL.text,
+        "14EU":"Изменение за 14 дней: "+is_14EU.text
+    }
+    
+    with open ("ltc_dict.json","w",encoding='utf-8') as file:
+        json.dump(ltc_dict, file, indent=4, ensure_ascii=False)
+
+    for key,value in ltc_dict.items():
+        nik = f"{hlink(value['title'],value['url'])}\n"
+        news = f"<b>{value['time']}</b>\n"\
+        f"{'Ł → ₱ 📊📊📊'}\n"\
+        f"<u>{value['valueRU']}</u>\n"\
+        f"<b>{value['isoRU']}</b>\n"\
+        f"<b>{value['14RU']}</b>\n"\
+        f"{'Ł → $ 📊📊📊'}\n"\
+        f"<u>{value['valueDL']}</u>\n"\
+        f"<b>{value['isoDL']}</b>\n"\
+        f"<b>{value['14DL']}</b>\n"\
+        f"{'Ł → € 📊📊📊'}\n"\
+        f"<u>{value['valueEU']}</u>\n"\
+        f"<b>{value['isoEU']}</b>\n"\
+        f"<b>{value['14EU']}</b>"
+        await message.answer(news)
+        await message.answer(nik)
+
 """ -----------------------------------------------------------------------------------------------------------------------------------"""
 #Back'и для cybersports
 
