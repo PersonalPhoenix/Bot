@@ -12,6 +12,9 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemo
 from aiogram.utils.markdown import hlink
 
 
+""" -----------------------------------------------------------------------------------------------------------------------------------"""
+
+
 #Задаем переменную бота для обращения в телегу по токену / Create token
 TOKEN = None #Обозначаем токен / Denote token
 with open("C:/Users/applm/OneDrive/Рабочий стол/Projects/project BOT/TOKEN.txt") as f:  #Открываем файл с токеном / Open file with token
@@ -19,8 +22,22 @@ with open("C:/Users/applm/OneDrive/Рабочий стол/Projects/project BOT/
 
 bot = Bot (TOKEN, parse_mode=types.ParseMode.HTML) #Присваиваем токен / Assigning a token
 
-#Словарь для парсинга / Dictionary for parse
-news_dict = {}
+#Словари для парсинга / Dictionary for parse
+
+#Новости киберспорта
+Dnews_dict = {}
+CSnews_dict = {}
+Lnews_dict = {}
+
+#Новости крипты
+btc_dict = {}
+eth_dict = {}
+ltc_dict = {}
+
+#Курсы крипты
+CurBTC_dict = {}
+CurETH_dict = {}
+CurLTC_dict = {}
 
 #Dp = диспетчер для комманд / Dispatcherfor command
 dp = Dispatcher (bot)
@@ -31,46 +48,43 @@ async def on_startup (_): #Задаем функцию / Setting the function
     print ("МУЗЫКА ПОШЛА") #Вывод сообщения / Output message
 
 
+""" -----------------------------------------------------------------------------------------------------------------------------------"""
+
 
 #MainMenu главное меню
 niws = KeyboardButton('/news ✉️')
 ixtr = KeyboardButton('/juk 🙂')
 mainMenu = ReplyKeyboardMarkup (resize_keyboard=True).row(niws,ixtr)
 
-
 #Back меню приколов
 backMain = KeyboardButton('/backMain ❌')
 backJuk = KeyboardButton('/backJuk ❌')
 backKitty = KeyboardButton('/bacKitty ❌')
-
 
 #ixtrMenu основное меню приколов
 kits = KeyboardButton('/kitty 🦊')
 joke = KeyboardButton('/joke 😂')
 ixtrMenu = ReplyKeyboardMarkup(resize_keyboard=True).row(kits,joke,backMain)
 
-
 #KitsMenu меню с котами
 sticker = KeyboardButton('/sticker 🎆') 
 image = KeyboardButton('/image 🖼')
 kitsMenu = ReplyKeyboardMarkup(resize_keyboard=True).row(sticker,image,backJuk)
-
 
 #StickerMenu меню стикеров котов
 static = KeyboardButton('/tomcat 😼')
 flexkit = KeyboardButton('/flexkitty 🐈')
 stickerMenu = ReplyKeyboardMarkup(resize_keyboard=True).row(static,flexkit,backKitty)
 
-
-
 #Back меню новостей
 backMain = KeyboardButton('/backMain ❌')
 backNews = KeyboardButton('/backNews ❌')
 backCyber = KeyboardButton('/backCyber ❌')
+backCrypto = KeyboardButton('/backCryptos ❌')
 
 #NewsMenu меню новостей базовое
 cyber = KeyboardButton('/cybersports 💻')
-crypto = KeyboardButton('/cryptocurrencies 📈')
+crypto = KeyboardButton('/cryptos 📈')
 world = KeyboardButton('/worldNews 🌏')
 newsMenu = ReplyKeyboardMarkup (resize_keyboard=True).row(cyber,crypto,world,backMain)
 
@@ -81,20 +95,30 @@ lol = KeyboardButton('/LOL 🌈')
 cyberMenu = ReplyKeyboardMarkup(resize_keyboard=True).row(dota,cs,lol,backNews)
 
 #CyberMenu меню новостей доты
-newsDota = KeyboardButton('/DotaNews')
-the = KeyboardButton('/TI')
+newsDota = KeyboardButton('/Dnews ✉️')
+the = KeyboardButton('/TI 🤸‍♀️')
 DnewsMenu = ReplyKeyboardMarkup(resize_keyboard=True).row(newsDota,the,backCyber)
 
 #CyberMenu меню новостей кс
-newsCS = KeyboardButton('/CSNews')
-major = KeyboardButton('/Major')
+newsCS = KeyboardButton('/CSNews ✉️')
+major = KeyboardButton('/Major 🤸‍♀️')
 CnewsMenu = ReplyKeyboardMarkup(resize_keyboard=True).row(newsCS,major,backCyber)
 
 #CyberMenu меню новостей лола
-newsL = KeyboardButton('/LNews')
-worlds = KeyboardButton('/Worlds')
+newsL = KeyboardButton('/LNews ✉️')
+worlds = KeyboardButton('/Worlds 🤸‍♀️')
 LnewsMenu = ReplyKeyboardMarkup(resize_keyboard=True).row(newsL,worlds,backCyber)
 
+#Crypto меню для криптовалют
+cryptonews = KeyboardButton('/cryptos ✉️')
+btc = KeyboardButton('/BTC 🪬')
+eth = KeyboardButton('/ETH 🔷')
+ltc = KeyboardButton('/LTC 🧿')
+cryptoMenu = ReplyKeyboardMarkup(resize_keyboard=True).row(cryptonews,btc,eth,ltc,backNews)
+
+
+""" -----------------------------------------------------------------------------------------------------------------------------------"""
+#Главные команды
 
 #Комманда старта / Command start
 @dp.message_handler (commands = ["start"]) #Задаем комманду / Setting the command
@@ -113,20 +137,37 @@ async def help (message: types.Message):
 
 @dp.message_handler (commands=["more"])
 async def more (message: types.Message):
-    await bot.send_message(message.chat.id,"""Для быстрого получения контента можно прописать команду, а не прокликивать по клаве.
+    await bot.send_message(message.chat.id,"""Для быстрого получения контента можно прописать команду, а не прокликивать по клаве. 
 Полный список комманд:
     /start (начать общение)
     /help (помощь)
     /more (больше информации)
-    /juk (вывести меню приколов)
+    --------------------------
     /news (вывести меню новостей)
+    /cybersports (вывести меню новостей киберспорта)
+    /Dota2 (вывести меню новостей Dota 2)
+    /Dnews (получить последние новости из мира Dota 2)
+    /TI (получить информацию по прошедшему и следующему The International)
+    /CS (вывести меню новостей Counter Strike Global Offensive)
+    /Major (получить информацию по прошедшему и следующему Major)
+    /CSnews (получить последние новости из мира CS GО)
+    /LOL (вывести меню новостей League of Legend)
+    /Lnews (получить последние новости из мира LOL'а)
+    /Worlds (получить информацию по прошедшему и следующему Worlds)
+    --------------------------
+    /crytpos (вывести меню криптовалют)
+    --------------------------
+    /juk (вывести меню приколов)
     /joke (получить разрывную)
     /sticker (вывод меню стикеров с котами)
     /tomcat (получить статичный стикер с котом)
     /flexkitty (получить динамичный стикер с котом)
-    /image (получить картинку кота)""")
+    /image (получить картинку кота)
+    """)
+    
 
-
+""" -----------------------------------------------------------------------------------------------------------------------------------"""
+#Пока что не нужный кусок кода
 
 #Вывод последней новости на данный момент / Output a last news at moment
 @dp.message_handler(commands=["last"])
@@ -143,19 +184,22 @@ async def neks (message: types.Message):
         round_data = round.find (class_="pub_AKjdn").text
         round_link = round.find (class_="link_CocWY")
         round_url = f'https://www.cybersport.ru{round_link.get("href")}'
-        news_dict [round_data] = {
+        Dnews_dict [round_data] = {
             "time": round_data,
             "title": round_title,
             "url": round_url }
 
     with open ("news_dict.json","w",encoding='utf-8') as file:
-        json.dump(news_dict, file, indent=4, ensure_ascii=False)
+        json.dump(Dnews_dict, file, indent=4, ensure_ascii=False)
 
-        for k,v in sorted(news_dict.items())[-1:]:
+        for k,v in sorted(Dnews_dict.items())[-1:]:
             news = f"<b>{v['time']}</b>\n"\
             f"{hlink(v['title'],v['url'])}"
             await message.answer(news)
 
+
+""" -----------------------------------------------------------------------------------------------------------------------------------"""
+#Списки со стикерами и анекдотами
 
 #Cписок id стикеров статичных котов / List id stickers static cats
 stat = ["CAACAgIAAxkBAAEGReBjYN1bncaxE0k4O8yqWpHidwq-QQADFwACBud5SAZAQLkOAjyhKgQ", #CATS
@@ -193,10 +237,21 @@ jokers = ["""Заходит однажды в бар улитка и говор�
 Потому-что вода это жидКость.""",
 """В семье скелетов родился сын. Назвали Костян."""]
 
-#Команды/кнопки меню приколов
+
+""" -----------------------------------------------------------------------------------------------------------------------------------"""
+#Главное меню
+
+@dp.message_handler (commands=["news"])
+async def neus (message: types.Message):
+    await bot.send_message(message.from_user.id,"Займемся делом",reply_markup=newsMenu)
+
 @dp.message_handler (commands=["juk"])
 async def prikl(message: types.Message):
     await bot.send_message(message.from_user.id, "Выбери прикольчик",reply_markup=ixtrMenu)
+
+
+""" -----------------------------------------------------------------------------------------------------------------------------------"""
+#Меню приколов
 
 @dp.message_handler (commands=["joke"])
 async def jk (message: types.Message):
@@ -220,12 +275,15 @@ async def flx (message: types.Message):
 
 
 #Лист с фото
-im = ["https://commons.wikimedia.org/wiki/File:Cat%27s_Eyes.jpg?uselang=ru","https://commons.wikimedia.org/wiki/File:Black_Footed_Cat.jpg?uselang=ru"]
+im = ["https://ru.pinterest.com/pin/113997434309824395/","https://commons.wikimedia.org/wiki/File:Cat%27s_Eyes.jpg?uselang=ru","https://commons.wikimedia.org/wiki/File:Black_Footed_Cat.jpg?uselang=ru"]
 
 @dp.message_handler (commands=["image"])
 async def img (message: types.Message):
     await bot.send_photo(message.chat.id,choice(im))
 
+
+""" -----------------------------------------------------------------------------------------------------------------------------------"""
+#Back'и для приколов
 
 #Фразы для back'ов
 literaly = ["Даем себаса","Оформляем себастьяна","Давим себастьяна","Базируемся в прошлое","Go back in time","Удаляем будущее","Шерудим себа","Обертас","Взадпятки","Критикуем пельмени","Шерудим ногами","ОП оп оп дал дал ушел"]
@@ -244,23 +302,23 @@ async def backitty (message: types.Message):
     await bot.send_message(message.from_user.id,choice(literaly),reply_markup=kitsMenu)
 
 
-
-
-#Команды/кнопки меню новостей
-@dp.message_handler (commands=["news"])
-async def neus (message: types.Message):
-    await bot.send_message(message.from_user.id,"Займемся делом",reply_markup=newsMenu)
+""" -----------------------------------------------------------------------------------------------------------------------------------"""
+#Cybersports
 
 @dp.message_handler (commands=["cybersports"])
 async def neuz (message: types.Message):
     await bot.send_message(message.from_user.id,"Киберспортс значится",reply_markup=cyberMenu)
+
+
+""" -----------------------------------------------------------------------------------------------------------------------------------"""
+#ДОТА
 
 @dp.message_handler (commands=["dota2"])
 async def neud (message: types.Message):
     await bot.send_message(message.from_user.id,"Дотку любишь побегать?",reply_markup=DnewsMenu)
 
 #Парсер дота новостей с выводом
-@dp.message_handler (commands=["Dota"]) 
+@dp.message_handler (commands=["Dnews"]) 
 async def news (message: types.Message):
     header = {
     'user-agent':"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.167 YaBrowser/22.7.5.940 Yowser/2.5 Safari/537.36"
@@ -274,15 +332,15 @@ async def news (message: types.Message):
         round_data = round.find (class_="pub_AKjdn").text
         round_link = round.find (class_="link_CocWY")
         round_url = f'https://www.cybersport.ru{round_link.get("href")}'
-        news_dict [round_data] = {
+        Dnews_dict [round_data] = {
             "time": round_data,
             "title": round_title,
             "url": round_url }
 
-    with open ("news_dict.json","w",encoding='utf-8') as file:
-        json.dump(news_dict, file, indent=4, ensure_ascii=False)
+    with open ("Dnews_dict.json","w",encoding='utf-8') as file:
+        json.dump(Dnews_dict, file, indent=4, ensure_ascii=False)
 
-        for k,v in sorted(news_dict.items()):
+        for k,v in sorted(Dnews_dict.items()):
             news = f"<b>{v['time']}</b>\n"\
             f"{hlink(v['title'],v['url'])}"
             await message.answer(news)
@@ -294,7 +352,7 @@ The International 2022
 Дата проведения - c 15.10.2022 по 30.10.2022
 Сумма призовых - $ 18 930 775
 Место проведения - Сингапур
-Участники:
+Участники (всего 6 регионов, 20 команд):
 
 Китай:
 Team Aster - 4
@@ -333,13 +391,41 @@ TSM - 19-20
 На данный момент дата, место и формат проведения 
 The International 2023 не известно""")
 
+
+""" -----------------------------------------------------------------------------------------------------------------------------------"""
+#КСКА
+
 @dp.message_handler (commands=["CS"])
 async def neud (message: types.Message):
     await bot.send_message(message.from_user.id,"Кску любишь побегать?",reply_markup=CnewsMenu)
 
-#место
-#для
-#парсера
+#Парсер кс новостей с выводом
+@dp.message_handler (commands=["CSnews"]) 
+async def news (message: types.Message):
+    header = {
+    'user-agent':"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.167 YaBrowser/22.7.5.940 Yowser/2.5 Safari/537.36"
+    }
+    url = ("https://www.cybersport.ru/tags/cs-go")
+    r = requests.get (url=url)
+    soup = BeautifulSoup (r.text, "lxml")
+    rounded_block = soup.find_all (class_="rounded-block root_d51Rr with-hover no-padding no-margin")
+    for round in rounded_block:
+        round_title = round.find (class_="title_nSS03").text
+        round_data = round.find (class_="pub_AKjdn").text
+        round_link = round.find (class_="link_CocWY")
+        round_url = f'https://www.cybersport.ru{round_link.get("href")}'
+        CSnews_dict [round_data] = {
+            "time": round_data,
+            "title": round_title,
+            "url": round_url }
+
+    with open ("CSnews_dict.json","w",encoding='utf-8') as file:
+        json.dump(CSnews_dict, file, indent=4, ensure_ascii=False)
+
+        for k,v in sorted(CSnews_dict.items()):
+            news = f"<b>{v['time']}</b>\n"\
+            f"{hlink(v['title'],v['url'])}"
+            await message.answer(news)
 
 @dp.message_handler (commands=["major"])
 async def neud (message: types.Message):
@@ -350,18 +436,205 @@ PGL Major Antwerp 2022
 Место проведения - Антверпен, Бельгия
 """)
 
+
+""" -----------------------------------------------------------------------------------------------------------------------------------"""
+#LOL
+
 @dp.message_handler (commands=["LOL"])
 async def neud (message: types.Message):
     await bot.send_message(message.from_user.id,"Анимешник чишо?",reply_markup=LnewsMenu)
 
-#место
-#для
-#парсера
+#Парсер лол новостей с выводом
+@dp.message_handler (commands=["Lnews"]) 
+async def news (message: types.Message):
+    header = {
+    'user-agent':"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.167 YaBrowser/22.7.5.940 Yowser/2.5 Safari/537.36"
+    }
+    url = ("https://www.cybersport.ru/tags/league-of-legends")
+    r = requests.get (url=url)
+    soup = BeautifulSoup (r.text, "lxml")
+    rounded_block = soup.find_all (class_="rounded-block root_d51Rr with-hover no-padding no-margin")
+    for round in rounded_block:
+        round_title = round.find (class_="title_nSS03").text
+        round_data = round.find (class_="pub_AKjdn").text
+        round_link = round.find (class_="link_CocWY")
+        round_url = f'https://www.cybersport.ru{round_link.get("href")}'
+        Lnews_dict [round_data] = {
+            "time": round_data,
+            "title": round_title,
+            "url": round_url }
+
+    with open ("Lnews_dict.json","w",encoding='utf-8') as file:
+        json.dump(Lnews_dict, file, indent=4, ensure_ascii=False)
+
+        for k,v in sorted(Lnews_dict.items()):
+            news = f"<b>{v['time']}</b>\n"\
+            f"{hlink(v['title'],v['url'])}"
+            await message.answer(news)
 
 @dp.message_handler (commands=["Worlds"])
 async def neud (message: types.Message):
     await bot.send_message(message.from_user.id,""" 321213
     """)
+
+
+""" -----------------------------------------------------------------------------------------------------------------------------------"""
+#Crypto меню
+
+@dp.message_handler (commands=["cryptos"])
+async def cryptocurriens (message: types.Message):
+    await bot.send_message(message.from_user.id,"Поговорим за money 😎", reply_markup=cryptoMenu)
+
+
+""" -----------------------------------------------------------------------------------------------------------------------------------"""
+#BTC
+
+@dp.message_handler (commands=["BTC"])
+async def bitocNews (message: types.Message):
+    header = {
+    'user-agent':"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.167 YaBrowser/22.7.5.940 Yowser/2.5 Safari/537.36"
+    }
+    url = ("https://www.vbr.ru/crypto/btc/")
+    r = requests.get (url=url)
+    soup = BeautifulSoup (r.text, "lxml")
+    rounded_block = soup.find(class_="rates-best-table")
+
+    #распаршиваем табл
+    roundall = rounded_block.select("tr > td")
+
+    #изменение за день
+    isoRU = roundall[2] #isoRU
+    isoDL = roundall[6] #isoDL
+    isoEU = roundall[10] #isoEU
+
+    #курс в рублях/долларах/евро
+    roundRU = roundall[1] #valueRU
+    roundDL = roundall[5] #valueDL
+    roundEU = roundall[9] #valueDL
+
+    #изменение за 14 дней
+    is_14RU = roundall[3] #14RU
+    is_14DL = roundall[7] #14DL
+    is_14EU = roundall[11] #14EU
+
+    #время последней котировка
+    time = soup.find (class_="common-val nowrap") #time
+    
+    #словарь с информацией курса биткойна и его последних изменений
+    btc_dict [url]= {
+
+        "url":url,
+        "title":"Кликни чтобы узнать больше:)",
+        "time":"Котировка за "+time.text,
+
+        "valueRU":"Курс в рублях: "+roundRU.text,
+        "valueDL":"Курс в долларах: "+roundDL.text,
+        "valueEU":"Курс в евро: "+roundEU.text,
+
+        "isoRU":"Изменение за день: "+isoRU.text,
+        "isoDL":"Изменение за день: "+isoDL.text,
+        "isoEU":"Изменение за день: "+isoEU.text,
+
+        "14RU":"Изменение за 14 дней: "+is_14RU.text,
+        "14DL":"Изменение за 14 дней: "+is_14DL.text,
+        "14EU":"Изменение за 14 дней: "+is_14EU.text
+    }
+    
+    with open ("Lnews_dict.json","w",encoding='utf-8') as file:
+        json.dump(Lnews_dict, file, indent=4, ensure_ascii=False)
+
+    for key,value in btc_dict.items():
+        nik = f"{hlink(value['title'],value['url'])}\n"
+        news = f"<b>{value['time']}</b>\n"\
+        f"<b>{value['valueRU']}</b>\n"\
+        f"<b>{value['isoRU']}</b>\n"\
+        f"<b>{value['14RU']}</b>\n"\
+        f"<b>{value['valueDL']}</b>\n"\
+        f"<b>{value['isoDL']}</b>\n"\
+        f"<b>{value['14DL']}</b>\n"\
+        f"<b>{value['valueEU']}</b>\n"\
+        f"<b>{value['isoEU']}</b>\n"\
+        f"<b>{value['14EU']}</b>"
+        await message.answer(news)
+        await message.answer(nik)
+        
+#ETH
+
+@dp.message_handler (commands=["ETH"])
+async def bitocNews (message: types.Message):
+    header = {
+    'user-agent':"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.167 YaBrowser/22.7.5.940 Yowser/2.5 Safari/537.36"
+    }
+    url = ("https://www.vbr.ru/crypto/eth/")
+    r = requests.get (url=url)
+    soup = BeautifulSoup (r.text, "lxml")
+    rounded_block = soup.find(class_="rates-best-table")
+
+    #распаршиваем табл
+    roundall = rounded_block.select("tr > td")
+
+    #изменение за день
+    isoRU = roundall[2] #isoRU
+    isoDL = roundall[6] #isoDL
+    isoEU = roundall[10] #isoEU
+
+    #курс в рублях/долларах/евро
+    roundRU = roundall[1] #valueRU
+    roundDL = roundall[5] #valueDL
+    roundEU = roundall[9] #valueDL
+
+    #изменение за 14 дней
+    is_14RU = roundall[3] #14RU
+    is_14DL = roundall[7] #14DL
+    is_14EU = roundall[11] #14EU
+
+    #время последней котировка
+    time = soup.find (class_="common-val nowrap") #time
+    
+    #словарь с информацией курса биткойна и его последних изменений
+    eth_dict [url]= {
+
+        "url":url,
+        "title":"Кликни чтобы узнать больше:)",
+        "time":"Котировка за "+time.text,
+
+        "valueRU":"Курс в рублях :"+roundRU.text,
+        "valueDL":"Курс в долларах "+roundDL.text,
+        "valueEU":"Курс в евро  "+roundEU.text,
+
+        "isoRU":"Изменение за день "+isoRU.text,
+        "isoDL":"Изменение за день "+isoDL.text,
+       "isoEU":"Изменение за день "+isoEU.text,
+
+        "14RU":"Изменение за 14 дней "+is_14RU.text,
+        "14DL":"Изменение за 14 дней "+is_14DL.text,
+        "14EU":"Изменение за 14 дней "+is_14EU.text
+    }
+    
+    with open ("eth_dict.json","w",encoding='utf-8') as file:
+        json.dump(eth_dict, file, indent=4, ensure_ascii=False)
+
+    for key,value in eth_dict.items():
+        nik = f"{hlink(value['title'],value['url'])}\n"
+        news = f"<b>{value['time']}</b>\n"\
+        f"{'₿ → ₱ 📊📊📊'}\n"\
+        f"<u>{value['valueRU']}</u>\n"\
+        f"<b>{value['isoRU']}</b>\n"\
+        f"<b>{value['14RU']}</b>\n"\
+        f"{'₿ → $ 📊📊📊'}\n"\
+        f"<u>{value['valueDL']}</u>\n"\
+        f"<b>{value['isoDL']}</b>\n"\
+        f"<b>{value['14DL']}</b>\n"\
+        f"{'₿ → € 📊📊📊'}\n"\
+        f"<u>{value['valueEU']}</u>\n"\
+        f"<b>{value['isoEU']}</b>\n"\
+        f"<b>{value['14EU']}</b>"
+        await message.answer(news)
+        await message.answer(nik)
+
+        
+""" -----------------------------------------------------------------------------------------------------------------------------------"""
+#Back'и для cybersports
 
 #Back для возврата в основное меню новостей
 @dp.message_handler (commands=["backNews"])
@@ -372,6 +645,10 @@ async def backnew (message: types.Message):
 @dp.message_handler (commands=["backCyber"])
 async def backcyb (message: types.Message):
     await bot.send_message(message.from_user.id,choice(literaly),reply_markup=cyberMenu)
+
+
+""" -----------------------------------------------------------------------------------------------------------------------------------"""
+
 
 
 #Запуск бота  
