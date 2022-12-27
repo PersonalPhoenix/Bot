@@ -10,6 +10,8 @@ import lxml
 import json
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from aiogram.utils.markdown import hlink
+import random
+import re
 
 
 """ -----------------------------------------------------------------------------------------------------------------------------------"""
@@ -22,7 +24,11 @@ with open("C:/Users/applm/OneDrive/Рабочий стол/Projects/project BOT/
 
 bot = Bot (TOKEN, parse_mode=types.ParseMode.HTML) #Присваиваем токен / Assigning a token
 
+
 #Словари для парсинга / Dictionary for parse
+
+#Новости мира
+wrld_dict = {}
 
 #Новости киберспорта
 Dnews_dict = {}
@@ -121,48 +127,56 @@ cryptoMenu = ReplyKeyboardMarkup(resize_keyboard=True).row(cryptonews,btc,eth,lt
 #Комманда старта / Command start
 @dp.message_handler (commands = ["start"]) #Задаем комманду / Setting the command
 async def start  (message: types.Message): #Задаем функцию / Setting the function
-    await bot.send_message( message.from_user.id, 'YEP начинаем',reply_markup = mainMenu) #Отправляем приветствие / Send hello
-    await bot.send_message( message.from_user.id, 'Если хочешь узнать что я умею, пиши /help')
+    await bot.send_message( message.from_user.id, 'YEP начинаем \n'+'Если хочешь узнать что я умею, пиши /info',reply_markup = mainMenu) #Отправляем приветствие / Send hello
     await bot.send_sticker(message.chat.id,"CAACAgIAAxkBAAEFiWli9TsP9B1BLa8HrEqL51EtH4UQEAACnhYAArpIyUtcjAeK6Rs_SykE") #Отправляем стикер / Send sticker
 
-@dp.message_handler (commands=["help"])
+#Комманда помощи
+@dp.message_handler (commands=["info"])
 async def help (message: types.Message):
-    await bot.send_message(message.chat.id, """Я специализируюсь на новостях киберспорта и критовалют, но также умею выдавать прикольчики
-    Для новостей напиши /news
-    Для прикольчиков напиши /juk
-Также можно воспользоваться клавиатурой если писать впадлу.
-У клавиатуры есть более быстрая навигация, чтобы ее узнать напиши /more""")
+    await bot.send_message(message.chat.id, 
+    f"Я специализируюсь на новостях киберспорта и критовалют, но также умею выдавать прикольчики.\n"\
+    f"   Для новостей напиши <u>/news</u>\n"\
+    f"   Для прикольчиков напиши <u>/juk</u>\n"\
+    f"   У клавиатуры есть более быстрая навигация, чтобы ее узнать напиши <u>/help</u>")
 
-@dp.message_handler (commands=["more"])
+#Комманда всех команд
+@dp.message_handler (commands=["help"])
 async def more (message: types.Message):
-    await bot.send_message(message.chat.id,"""Для быстрого получения контента можно прописать команду, а не прокликивать по клаве. 
-Полный список комманд:
-    /start (начать общение)
-    /help (помощь)
-    /more (больше информации)
-    --------------------------
-    /news (вывести меню новостей)
-    /cybersports (вывести меню новостей киберспорта)
-    /Dota2 (вывести меню новостей Dota 2)
-    /Dnews (получить последние новости из мира Dota 2)
-    /TI (получить информацию по прошедшему и следующему The International)
-    /CS (вывести меню новостей Counter Strike Global Offensive)
-    /Major (получить информацию по прошедшему и следующему Major)
-    /CSnews (получить последние новости из мира CS GО)
-    /LOL (вывести меню новостей League of Legend)
-    /Lnews (получить последние новости из мира LOL'а)
-    /Worlds (получить информацию по прошедшему и следующему Worlds)
-    --------------------------
-    /crytpos (вывести меню криптовалют)
-    --------------------------
-    /juk (вывести меню приколов)
-    /joke (получить разрывную)
-    /sticker (вывод меню стикеров с котами)
-    /tomcat (получить статичный стикер с котом)
-    /flexkitty (получить динамичный стикер с котом)
-    /image (получить картинку кота)
-    """)
-    
+    await bot.send_message(message.chat.id,
+    f"Для быстрого получения контента можно прописать команду, а не прокликивать по клаве.\n"\
+    f"Полный список комманд:\n"\
+    f"<u>   /start</u> (начать общение)\n"\
+    f"<u>   /info</u> (информация о боте)\n"\
+    f"<u>   /help</u> (список возможностей)\n"\
+    f"--------------------------\n"\
+    f"<u>   /news</u> (вывести меню новостей)\n"\
+    f"<u>   /cybersports</u> (вывести меню новостей киберспорта)\n"\
+    f"<u>   /Dota2</u> (вывести меню новостей Dota 2)\n"\
+    f"<u>   /Dnews</u> (получить последние новости из мира Dota 2)\n"\
+    f"<u>   /TI</u> (получить информацию по прошедшему и следующему The International)\n"\
+    f"--------------------------\n"\
+    f"<u>   /CS</u> (вывести меню новостей CS GO)\n"\
+    f"<u>   /CSnews</u> (получить последние новости из мира CS GО)\n"\
+    f"<u>   /Major</u> (получить информацию по прошедшему и следующему Major)\n"\
+    f"--------------------------\n"\
+    f"<u>   /LOL</u> (вывести меню новостей League of Legend)\n"\
+    f"<u>   /Lnews</u> (получить последние новости из мира LOL'а)\n"\
+    f"<u>   /Worlds</u> (получить информацию по прошедшему и следующему Worlds)\n"\
+    f"--------------------------\n"\
+    f"<u>   /worldNews</u> (получить последние новости о мире)\n"\
+    f"--------------------------\n"\
+    f"<u>   /cryptos</u> (вывести меню криптовалют)\n"\
+    f"<u>   /cryptoNew</u> (новости криптовалют)\n"\
+    f"<u>   /BTC</u> (курс биткойна)\n"\
+    f"<u>   /ETH</u> (курс Ethereum)\n"\
+    f"<u>   /LTC</u> (курс Litecoin)\n"\
+    f"--------------------------\n"\
+    f"<u>   /juk</u> (вывести меню приколов)\n"\
+    f"<u>   /joke</u> (получить разрывную)\n"\
+    f"<u>   /sticker</u> (вывод меню стикеров с котами)\n"\
+    f"<u>   /tomcat</u> (получить статичный стикер с котом)\n"\
+    f"<u>   /flexkitty</u> (получить динамичный стикер с котом)\n"\
+    f"<u>   /image</u> (получить картинку кота)")
 
 """ -----------------------------------------------------------------------------------------------------------------------------------"""
 #Пока что не нужный кусок кода
@@ -301,6 +315,37 @@ async def backitty (message: types.Message):
 
 
 """ -----------------------------------------------------------------------------------------------------------------------------------"""
+#WorldNews
+
+@dp.message_handler (commands=["worldNews"])
+async def nes (message: types.Message):
+    header = {
+    'user-agent':"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.167 YaBrowser/22.7.5.940 Yowser/2.5 Safari/537.36"
+    }
+    url = ("https://www.rbc.ru/")
+    r = requests.get (url=url)
+    soup = BeautifulSoup (r.text, "lxml")
+    rounded_block = soup.find_all (class_="main__list")
+    for round in rounded_block:
+        round_title = round.find (class_="main__inner l-col-center").text
+        clear = ' '.join(e for e in round_title if e.isalnum())
+       # round_data = round.find (class_="pub_AKjdn").text
+        round_link = round.find (class_="main__feed js-main-reload-item")
+        round_url = f'https://www.rbc.ru/{round_link.get("data-vr-contentbox-url")}'
+        wrld_dict [clear] = {
+            "title": clear,
+            #url": round_url
+        }
+  #  with open ("wrld_dict.json","w",encoding='utf-8') as file:
+       # json.dump(wrld_dict, file, indent=4, ensure_ascii=False)
+
+      #  for k,v in sorted(wrld_dict.items()):
+          #  news = f"<b>{v['time']}</b>\n"\
+          #  f"{hlink(v['title'],v['url'])}"
+          #  await message.answer(news)
+        print (round_link)
+
+""" -----------------------------------------------------------------------------------------------------------------------------------"""
 #Cybersports
 
 @dp.message_handler (commands=["cybersports"])
@@ -432,6 +477,7 @@ PGL Major Antwerp 2022
 Дата проведения - с 08.05.2022 по 22.05.2022
 Сумма призовых - $ 1 000 000
 Место проведения - Антверпен, Бельгия
+Участники (всего 3 региона, 16 команды):
 """)
 
 
@@ -472,12 +518,68 @@ async def news (message: types.Message):
 
 @dp.message_handler (commands=["Worlds"])
 async def neud (message: types.Message):
-    await bot.send_message(message.from_user.id,""" 321213
+    await bot.send_message(message.from_user.id,"""
+    The 2022 Season World Championship (Worlds 2022)
+Дата проведения - c 29.09.2022 по 05.11.2022
+Сумма призовых - $ 2,225,000
+Место проведения - Северная Америка (Мексика и США)
+Участники (всего 11 регионов, 24 команды):
+
+Китай:
+JD Gaming - 3-4
+⁠EDward Gaming - 5-8
+Royal Never Give Up - 5-8
+Top Esports - 9-10
+
+Корея:
+DRX - 1
+⁠T1 - 2 
+Gen.G - 3-4
+DWG KIA - 5-8
+
+Европа:
+⁠Rogue - 5-8
+Fnatic - 9-10
+⁠G2 Esports - 11-14
+MAD Lions - 17-18
+
+Северная Америка:
+100 Thieves - 11-14
+⁠Evil Geniuses - 11-14
+⁠Cloud9 - 15-16
+
+Индонезия:
+⁠CTBC Flying Oyster - 11-14
+Beyond Gaming - 21-22
+
+Вьетнам:
+Saigon Buffalo - 19-20
+
+Бразилия:
+LOUD - 19-20
+
+Япония:
+DetonatioN FocusMe - 17-18
+
+Латинская Америка:
+⁠Isurus - 21-22
+
+Океания:
+⁠Chiefs Esports Club - 23-24
+
+Турция:
+⁠İstanbul Wildcats - 23-24
+
+Победители - южнокорейский коллектив коллектив ⁠DRX
+
+На данный момент дата, место и формат проведения 
+The 2022 Season World Championship 2023 не известно
     """)
 
 
 """ -----------------------------------------------------------------------------------------------------------------------------------"""
 #Crypto меню
+
 @dp.message_handler (commands=["cryptos"])
 async def cryptocurriens (message: types.Message):
     await bot.send_message(message.from_user.id,"Поговорим за деньги 😎", reply_markup=cryptoMenu)
@@ -490,23 +592,33 @@ async def cryptocurriens (message: types.Message):
     url = ("https://cryptonews.net/ru/")
     r = requests.get (url=url)
     soup = BeautifulSoup (r.text, "lxml")
-    rounded_block = soup.find_all (class_="col-xs-12 col-sm")
+    rounded_block = soup.find_all(class_="row news-item start-xs")
     for round in rounded_block:
-        round_title = round.find(class_='desc col-xs')
-        round_data = round.find (class_="datetime flex middle-xs")
-        round_link = round.find (class_="desc col-xs")
-        round_url = f'https://cryptonews.net/ru/{round_link.get("href")}'
-        CryptoNew_dict [round_title] = {
-            "time": round_data,
-            "title": round_title,
-            "url": round_url }
+        round_subtitle = round.find(class_='mark')
+        round_source = round.find(class_='desc col-xs'>'span')
+        round_title = round.find(class_='title')
+        round_link = round.find(class_='title')
+        round_url = f'https://cryptonews.net{round_link.get("href")}'
+        round_data = round.find(class_='datetime flex middle-xs').text
+        clear = ''.join(e for e in round_data if e.isalnum())
+        round_id = round.find(class_='row news-item start-xs'> 'data-id')
+        round_id2 = round_id.get("href")
+        line = re.sub('abcdefghijklmnopqrstuvwxyz.:/'," ",round_id2)
+        CryptoNew_dict [line] = {
+            "sub-title": round_subtitle.text,
+            "title":round_title.text,
+            "source_url": "Источник новости: "+round_source.text,
+            "url": round_url,
+            "time":clear
+           }
 
     with open ("CryptoNew_dict.json","w",encoding='utf-8') as file:
         json.dump(CryptoNew_dict, file, indent=4, ensure_ascii=False)
 
-        for k,v in sorted(CryptoNew_dict.items()):
-            news = f"<b>{v['time']}</b>\n"\
-            f"{hlink(v['title'],v['url'])}"
+        for k,v in reversed(CryptoNew_dict.items()):
+            news = f"<b>{v['sub-title']}</b>\n"\
+            f"{hlink(v['title'],v['url'])}\n"\
+            f"<b>{v['source_url']}</b>\n"
             await message.answer(news)
 
 
@@ -571,15 +683,15 @@ async def bitocNews (message: types.Message):
         nik = f"{hlink(value['title'],value['url'])}\n"
         news = f"<b>{value['time']}</b>\n"\
         f"{'₿ → ₱ 📊📊📊'}\n"\
-        f"<b>{value['valueRU']}</b>\n"\
+        f"<u>{value['valueRU']}</u>\n"\
         f"<b>{value['isoRU']}</b>\n"\
         f"<b>{value['14RU']}</b>\n"\
         f"{'₿ → $ 📊📊📊'}\n"\
-        f"<b>{value['valueDL']}</b>\n"\
+        f"<u>{value['valueDL']}</u>\n"\
         f"<b>{value['isoDL']}</b>\n"\
         f"<b>{value['14DL']}</b>\n"\
         f"{'₿ → € 📊📊📊'}\n"\
-        f"<b>{value['valueEU']}</b>\n"\
+        f"<u>{value['valueEU']}</u>\n"\
         f"<b>{value['isoEU']}</b>\n"\
         f"<b>{value['14EU']}</b>"
         await message.answer(news)
@@ -732,6 +844,8 @@ async def bitocNews (message: types.Message):
         f"<b>{value['14EU']}</b>"
         await message.answer(news)
         await message.answer(nik)
+
+#@dp.message_handler (text=['test'])
 
 """ -----------------------------------------------------------------------------------------------------------------------------------"""
 #Back'и для cybersports
