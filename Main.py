@@ -11,11 +11,13 @@ import json
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from aiogram.utils.markdown import hlink
 import random
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 import re
 
 
 """ -----------------------------------------------------------------------------------------------------------------------------------"""
-
+#TimeoutError (ошибка подключения к URL)
 
 #Задаем переменную бота для обращения в телегу по токену / Create token
 TOKEN = None #Обозначаем токен / Denote token
@@ -178,37 +180,6 @@ async def more (message: types.Message):
     f"<u>   /flexkitty</u> (получить динамичный стикер с котом)\n"\
     f"<u>   /image</u> (получить картинку кота)")
 
-""" -----------------------------------------------------------------------------------------------------------------------------------"""
-#Пока что не нужный кусок кода
-
-#Вывод последней новости на данный момент / Output a last news at moment
-@dp.message_handler(commands=["last"])
-async def neks (message: types.Message):
-    header = {
-    'user-agent':"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.167 YaBrowser/22.7.5.940 Yowser/2.5 Safari/537.36"
-    }
-    url = ("https://www.cybersport.ru/tags/dota-2")
-    r = requests.get (url=url)
-    soup = BeautifulSoup (r.text, "lxml")
-    rounded_block = soup.find_all (class_="rounded-block root_d51Rr with-hover no-padding no-margin")
-    for round in rounded_block:
-        round_title = round.find (class_="title_nSS03").text
-        round_data = round.find (class_="pub_AKjdn").text
-        round_link = round.find (class_="link_CocWY")
-        round_url = f'https://www.cybersport.ru{round_link.get("href")}'
-        Dnews_dict [round_data] = {
-            "time": round_data,
-            "title": round_title,
-            "url": round_url }
-
-    with open ("news_dict.json","w",encoding='utf-8') as file:
-        json.dump(Dnews_dict, file, indent=4, ensure_ascii=False)
-
-        for k,v in sorted(Dnews_dict.items())[-1:]:
-            news = f"<b>{v['time']}</b>\n"\
-            f"{hlink(v['title'],v['url'])}"
-            await message.answer(news)
-
 
 """ -----------------------------------------------------------------------------------------------------------------------------------"""
 #Списки со стикерами и анекдотами
@@ -322,20 +293,26 @@ async def nes (message: types.Message):
     header = {
     'user-agent':"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.167 YaBrowser/22.7.5.940 Yowser/2.5 Safari/537.36"
     }
+    session = requests.Session()
+    retry = Retry(connect=1, backoff_factor=0.5)
+    adapter = HTTPAdapter(max_retries=retry)
     url = ("https://www.rbc.ru/")
-    r = requests.get (url=url)
-    soup = BeautifulSoup (r.text, "lxml")
-    rounded_block = soup.find_all (class_="main__list")
-    for round in rounded_block:
-        round_title = round.find (class_="main__inner l-col-center").text
-        clear = ' '.join(e for e in round_title if e.isalnum())
+    try:
+        session.mount('https://www.rbc.ru/',adapter)
+        r = session.get (url=url,verify=True,headers=header,timeout=5) 
+        soup = BeautifulSoup (r.text, "lxml")
+        rounded_block = soup.find_all (class_="main__list")
+        for round in rounded_block:
+            round_title = round.find (class_="main__inner l-col-center").text
+            clear = ' '.join(e for e in round_title if e.isalnum())
        # round_data = round.find (class_="pub_AKjdn").text
-        round_link = round.find (class_="main__feed js-main-reload-item")
-        round_url = f'https://www.rbc.ru/{round_link.get("data-vr-contentbox-url")}'
-        wrld_dict [clear] = {
-            "title": clear,
-            #url": round_url
-        }
+            round_link = round.find (class_="main__feed js-main-reload-item")
+            round_url = round_link.select("a")
+            round_lu = round_url[0]['href']
+            wrld_dict [clear] = {
+                "title": clear,
+                "url": round_lu.text
+            }
   #  with open ("wrld_dict.json","w",encoding='utf-8') as file:
        # json.dump(wrld_dict, file, indent=4, ensure_ascii=False)
 
@@ -343,7 +320,10 @@ async def nes (message: types.Message):
           #  news = f"<b>{v['time']}</b>\n"\
           #  f"{hlink(v['title'],v['url'])}"
           #  await message.answer(news)
-        print (round_link)
+        print (wrld_dict)
+    except:
+        print("Ошибка соединения с сайтом (https://www.rbc.ru/)")
+        await bot.send_message(message.from_user.id,"В настоящее время сайт с новостями не доступен :( \n Попроубуй чуть-чуть попозже")
 
 """ -----------------------------------------------------------------------------------------------------------------------------------"""
 #Cybersports
@@ -366,27 +346,35 @@ async def news (message: types.Message):
     header = {
     'user-agent':"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.167 YaBrowser/22.7.5.940 Yowser/2.5 Safari/537.36"
     }
+    session = requests.Session()
+    retry = Retry(connect=1, backoff_factor=0.5)
+    adapter = HTTPAdapter(max_retries=retry)
     url = ("https://www.cybersport.ru/tags/dota-2")
-    r = requests.get (url=url)
-    soup = BeautifulSoup (r.text, "lxml")
-    rounded_block = soup.find_all (class_="rounded-block root_d51Rr with-hover no-padding no-margin")
-    for round in rounded_block:
-        round_title = round.find (class_="title_nSS03").text
-        round_data = round.find (class_="pub_AKjdn").text
-        round_link = round.find (class_="link_CocWY")
-        round_url = f'https://www.cybersport.ru{round_link.get("href")}'
-        Dnews_dict [round_data] = {
-            "time": round_data,
-            "title": round_title,
-            "url": round_url }
+    try:
+        session.mount('https://www.cybersport.ru/tags/dota-2',adapter)
+        r = session.get (url=url,verify=True,headers=header,timeout=5)
+        soup = BeautifulSoup (r.text, "lxml")
+        rounded_block = soup.find_all (class_="rounded-block root_d51Rr with-hover no-padding no-margin")
+        for round in rounded_block:
+            round_title = round.find (class_="title_nSS03").text
+            round_data = round.find (class_="pub_AKjdn").text
+            round_link = round.find (class_="link_CocWY")
+            round_url = f'https://www.cybersport.ru{round_link.get("href")}'
+            Dnews_dict [round_data] = {
+                "time": round_data,
+                "title": round_title,
+                "url": round_url }
 
-    with open ("Dnews_dict.json","w",encoding='utf-8') as file:
-        json.dump(Dnews_dict, file, indent=4, ensure_ascii=False)
+        with open ("Dnews_dict.json","w",encoding='utf-8') as file:
+            json.dump(Dnews_dict, file, indent=4, ensure_ascii=False)
 
-        for k,v in sorted(Dnews_dict.items()):
-            news = f"<b>{v['time']}</b>\n"\
-            f"{hlink(v['title'],v['url'])}"
-            await message.answer(news)
+            for k,v in sorted(Dnews_dict.items()):
+                news = f"<b>{v['time']}</b>\n"\
+                f"{hlink(v['title'],v['url'])}"
+                await message.answer(news)
+    except:
+        print("Ошибка соединения с сайтом (https://www.cybersport.ru/tags/dota-2)")
+        await bot.send_message(message.from_user.id,"В настоящее время сайт с новостями не доступен :( \n Попроубуй чуть-чуть попозже")
 
 @dp.message_handler (commands=["TI"])
 async def ti (message: types.Message):
@@ -448,27 +436,35 @@ async def news (message: types.Message):
     header = {
     'user-agent':"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.167 YaBrowser/22.7.5.940 Yowser/2.5 Safari/537.36"
     }
-    url = ("https://www.cybersport.ru/tags/cs-go")
-    r = requests.get (url=url)
-    soup = BeautifulSoup (r.text, "lxml")
-    rounded_block = soup.find_all (class_="rounded-block root_d51Rr with-hover no-padding no-margin")
-    for round in rounded_block:
-        round_title = round.find (class_="title_nSS03").text
-        round_data = round.find (class_="pub_AKjdn").text
-        round_link = round.find (class_="link_CocWY")
-        round_url = f'https://www.cybersport.ru{round_link.get("href")}'
-        CSnews_dict [round_data] = {
-            "time": round_data,
-            "title": round_title,
-            "url": round_url }
+    session = requests.Session()
+    retry = Retry(connect=1, backoff_factor=0.5)
+    adapter = HTTPAdapter(max_retries=retry)
+    try:
+        session.mount('https://www.cybersport.ru/tags/cs-go',adapter)
+        url = ("https://www.cybersport.ru/tags/cs-go")
+        r = session.get (url=url,verify=True,headers=header,timeout=5)
+        soup = BeautifulSoup (r.text, "lxml")
+        rounded_block = soup.find_all (class_="rounded-block root_d51Rr with-hover no-padding no-margin")
+        for round in rounded_block:
+            round_title = round.find (class_="title_nSS03").text
+            round_data = round.find (class_="pub_AKjdn").text
+            round_link = round.find (class_="link_CocWY")
+            round_url = f'https://www.cybersport.ru{round_link.get("href")}'
+            CSnews_dict [round_data] = {
+                "time": round_data,
+                "title": round_title,
+                "url": round_url }
 
-    with open ("CSnews_dict.json","w",encoding='utf-8') as file:
-        json.dump(CSnews_dict, file, indent=4, ensure_ascii=False)
+        with open ("CSnews_dict.json","w",encoding='utf-8') as file:
+            json.dump(CSnews_dict, file, indent=4, ensure_ascii=False)
 
-        for k,v in sorted(CSnews_dict.items()):
-            news = f"<b>{v['time']}</b>\n"\
-            f"{hlink(v['title'],v['url'])}"
-            await message.answer(news)
+            for k,v in sorted(CSnews_dict.items()):
+                news = f"<b>{v['time']}</b>\n"\
+                f"{hlink(v['title'],v['url'])}"
+                await message.answer(news)
+    except:
+        print("Ошибка соединения с сайтом (https://www.cybersport.ru/tags/cs-go)")
+        await bot.send_message(message.from_user.id,"В настоящее время сайт с новостями не доступен :( \n Попроубуй чуть-чуть попозже")
 
 @dp.message_handler (commands=["major"])
 async def neud (message: types.Message):
@@ -494,27 +490,35 @@ async def news (message: types.Message):
     header = {
     'user-agent':"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.167 YaBrowser/22.7.5.940 Yowser/2.5 Safari/537.36"
     }
+    session = requests.Session()
+    retry = Retry(connect=1, backoff_factor=0.5)
+    adapter = HTTPAdapter(max_retries=retry)
     url = ("https://www.cybersport.ru/tags/league-of-legends")
-    r = requests.get (url=url)
-    soup = BeautifulSoup (r.text, "lxml")
-    rounded_block = soup.find_all (class_="rounded-block root_d51Rr with-hover no-padding no-margin")
-    for round in rounded_block:
-        round_title = round.find (class_="title_nSS03").text
-        round_data = round.find (class_="pub_AKjdn").text
-        round_link = round.find (class_="link_CocWY")
-        round_url = f'https://www.cybersport.ru{round_link.get("href")}'
-        Lnews_dict [round_data] = {
-            "time": round_data,
-            "title": round_title,
-            "url": round_url }
+    try:
+        session.mount('https://www.cybersport.ru/tags/league-of-legends',adapter)
+        r = session.get (url=url,verify=True,headers=header,timeout=5)
+        soup = BeautifulSoup (r.text, "lxml")
+        rounded_block = soup.find_all (class_="rounded-block root_d51Rr with-hover no-padding no-margin")
+        for round in rounded_block:
+            round_title = round.find (class_="title_nSS03").text
+            round_data = round.find (class_="pub_AKjdn").text
+            round_link = round.find (class_="link_CocWY")
+            round_url = f'https://www.cybersport.ru{round_link.get("href")}'
+            Lnews_dict [round_data] = {
+                "time": round_data,
+                "title": round_title,
+                "url": round_url }
 
-    with open ("Lnews_dict.json","w",encoding='utf-8') as file:
-        json.dump(Lnews_dict, file, indent=4, ensure_ascii=False)
+        with open ("Lnews_dict.json","w",encoding='utf-8') as file:
+            json.dump(Lnews_dict, file, indent=4, ensure_ascii=False)
 
-        for k,v in sorted(Lnews_dict.items()):
-            news = f"<b>{v['time']}</b>\n"\
-            f"{hlink(v['title'],v['url'])}"
-            await message.answer(news)
+            for k,v in sorted(Lnews_dict.items()):
+                news = f"<b>{v['time']}</b>\n"\
+                f"{hlink(v['title'],v['url'])}"
+                await message.answer(news)
+    except:
+        print("Ошибка соединения с сайтом (https://www.cybersport.ru/tags/league-of-legends)")
+        await bot.send_message(message.from_user.id,"В настоящее время сайт с новостями не доступен :( \n Попроубуй чуть-чуть попозже")
 
 @dp.message_handler (commands=["Worlds"])
 async def neud (message: types.Message):
@@ -589,37 +593,45 @@ async def cryptocurriens (message: types.Message):
     header = {
     'user-agent':"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.167 YaBrowser/22.7.5.940 Yowser/2.5 Safari/537.36"
     }
+    session = requests.Session()
+    retry = Retry(connect=1, backoff_factor=0.5)
+    adapter = HTTPAdapter(max_retries=retry)
     url = ("https://cryptonews.net/ru/")
-    r = requests.get (url=url)
-    soup = BeautifulSoup (r.text, "lxml")
-    rounded_block = soup.find_all(class_="row news-item start-xs")
-    for round in rounded_block:
-        round_subtitle = round.find(class_='mark')
-        round_source = round.find(class_='desc col-xs'>'span')
-        round_title = round.find(class_='title')
-        round_link = round.find(class_='title')
-        round_url = f'https://cryptonews.net{round_link.get("href")}'
-        round_data = round.find(class_='datetime flex middle-xs').text
-        clear = ''.join(e for e in round_data if e.isalnum())
-        round_id = round.find(class_='row news-item start-xs'> 'data-id')
-        round_id2 = round_id.get("href")
-        line = re.sub('abcdefghijklmnopqrstuvwxyz.:/'," ",round_id2)
-        CryptoNew_dict [line] = {
-            "sub-title": round_subtitle.text,
-            "title":round_title.text,
-            "source_url": "Источник новости: "+round_source.text,
-            "url": round_url,
-            "time":clear
-           }
+    try:
+        session.mount('https://cryptonews.net/ru/',adapter)
+        r = session.get (url=url,verify=True,headers=header,timeout=5)
+        soup = BeautifulSoup (r.text, "lxml")
+        rounded_block = soup.find_all(class_="row news-item start-xs")
+        for round in rounded_block:
+            round_subtitle = round.find(class_='mark')
+            round_source = round.find(class_='desc col-xs'>'span')
+            round_title = round.find(class_='title')
+            round_link = round.find(class_='title')
+            round_url = f'https://cryptonews.net{round_link.get("href")}'
+            round_data = round.find(class_='datetime flex middle-xs').text
+            clear = ''.join(e for e in round_data if e.isalnum())
+            round_id = round.find(class_='row news-item start-xs'> 'data-id')
+            round_id2 = round_id.get("href")
+            line = re.sub('abcdefghijklmnopqrstuvwxyz.:/'," ",round_id2)
+            CryptoNew_dict [line] = {
+                "sub-title": round_subtitle.text,
+                "title":round_title.text,
+                "source_url": "Источник новости: "+round_source.text,
+                "url": round_url,
+                "time":clear
+            }
 
-    with open ("CryptoNew_dict.json","w",encoding='utf-8') as file:
-        json.dump(CryptoNew_dict, file, indent=4, ensure_ascii=False)
+        with open ("CryptoNew_dict.json","w",encoding='utf-8') as file:
+            json.dump(CryptoNew_dict, file, indent=4, ensure_ascii=False)
 
-        for k,v in reversed(CryptoNew_dict.items()):
-            news = f"<b>{v['sub-title']}</b>\n"\
-            f"{hlink(v['title'],v['url'])}\n"\
-            f"<b>{v['source_url']}</b>\n"
-            await message.answer(news)
+            for k,v in reversed(CryptoNew_dict.items()):
+                news = f"<b>{v['sub-title']}</b>\n"\
+                f"{hlink(v['title'],v['url'])}\n"\
+                f"<b>{v['source_url']}</b>\n"
+                await message.answer(news)
+    except:
+        print("Ошибка соединения с сайтом (https://cryptonews.net/ru/)")
+        await bot.send_message(message.from_user.id,"В настоящее время сайт с новостями не доступен :( \n Попроубуй чуть-чуть попозже")
 
 
 """ -----------------------------------------------------------------------------------------------------------------------------------"""
@@ -630,72 +642,80 @@ async def bitocNews (message: types.Message):
     header = {
     'user-agent':"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.167 YaBrowser/22.7.5.940 Yowser/2.5 Safari/537.36"
     }
+    session = requests.Session()
+    retry = Retry(connect=1, backoff_factor=0.5)
+    adapter = HTTPAdapter(max_retries=retry)
     url = ("https://www.vbr.ru/crypto/btc/")
-    r = requests.get (url=url)
-    soup = BeautifulSoup (r.text, "lxml")
-    rounded_block = soup.find(class_="rates-best-table")
+    try:
+        session.mount('https://www.vbr.ru/crypto/btc/',adapter)
+        r = session.get (url=url,verify=True,headers=header,timeout=5)
+        soup = BeautifulSoup (r.text, "lxml")
+        rounded_block = soup.find(class_="rates-best-table")
 
-    #распаршиваем табл
-    roundall = rounded_block.select("tr > td")
+        #распаршиваем табл
+        roundall = rounded_block.select("tr > td")
 
-    #изменение за день
-    isoRU = roundall[2] #isoRU
-    isoDL = roundall[6] #isoDL
-    isoEU = roundall[10] #isoEU
+        #изменение за день
+        isoRU = roundall[2] #isoRU
+        isoDL = roundall[6] #isoDL
+        isoEU = roundall[10] #isoEU
 
-    #курс в рублях/долларах/евро
-    roundRU = roundall[1] #valueRU
-    roundDL = roundall[5] #valueDL
-    roundEU = roundall[9] #valueDL
+        #курс в рублях/долларах/евро
+        roundRU = roundall[1] #valueRU
+        roundDL = roundall[5] #valueDL
+        roundEU = roundall[9] #valueDL
 
-    #изменение за 14 дней
-    is_14RU = roundall[3] #14RU
-    is_14DL = roundall[7] #14DL
-    is_14EU = roundall[11] #14EU
+        #изменение за 14 дней
+        is_14RU = roundall[3] #14RU
+        is_14DL = roundall[7] #14DL
+        is_14EU = roundall[11] #14EU
 
-    #время последней котировка
-    time = soup.find (class_="common-val nowrap") #time
+        #время последней котировка
+        time = soup.find (class_="common-val nowrap") #time
     
-    #словарь с информацией курса биткойна и его последних изменений
-    btc_dict [url]= {
+        #словарь с информацией курса биткойна и его последних изменений
+        btc_dict [url]= {
 
-        "url":url,
-        "title":"Кликни чтобы узнать больше:)",
-        "time":"Котировка за "+time.text,
+            "url":url,
+            "title":"Кликни чтобы узнать больше:)",
+            "time":"Котировка за "+time.text,
 
-        "valueRU":"Курс в рублях: "+roundRU.text,
-        "valueDL":"Курс в долларах: "+roundDL.text,
-        "valueEU":"Курс в евро: "+roundEU.text,
+            "valueRU":"Курс в рублях: "+roundRU.text,
+            "valueDL":"Курс в долларах: "+roundDL.text,
+            "valueEU":"Курс в евро: "+roundEU.text,
 
-        "isoRU":"Изменение за день: "+isoRU.text,
-        "isoDL":"Изменение за день: "+isoDL.text,
-        "isoEU":"Изменение за день: "+isoEU.text,
+            "isoRU":"Изменение за день: "+isoRU.text,
+            "isoDL":"Изменение за день: "+isoDL.text,
+            "isoEU":"Изменение за день: "+isoEU.text,
 
-        "14RU":"Изменение за 14 дней: "+is_14RU.text,
-        "14DL":"Изменение за 14 дней: "+is_14DL.text,
-        "14EU":"Изменение за 14 дней: "+is_14EU.text
-    }
+            "14RU":"Изменение за 14 дней: "+is_14RU.text,
+            "14DL":"Изменение за 14 дней: "+is_14DL.text,
+            "14EU":"Изменение за 14 дней: "+is_14EU.text
+        }
     
-    with open ("btc_dict.json","w",encoding='utf-8') as file:
-        json.dump(btc_dict, file, indent=4, ensure_ascii=False)
+        with open ("btc_dict.json","w",encoding='utf-8') as file:
+            json.dump(btc_dict, file, indent=4, ensure_ascii=False)
 
-    for key,value in btc_dict.items():
-        nik = f"{hlink(value['title'],value['url'])}\n"
-        news = f"<b>{value['time']}</b>\n"\
-        f"{'₿ → ₱ 📊📊📊'}\n"\
-        f"<u>{value['valueRU']}</u>\n"\
-        f"<b>{value['isoRU']}</b>\n"\
-        f"<b>{value['14RU']}</b>\n"\
-        f"{'₿ → $ 📊📊📊'}\n"\
-        f"<u>{value['valueDL']}</u>\n"\
-        f"<b>{value['isoDL']}</b>\n"\
-        f"<b>{value['14DL']}</b>\n"\
-        f"{'₿ → € 📊📊📊'}\n"\
-        f"<u>{value['valueEU']}</u>\n"\
-        f"<b>{value['isoEU']}</b>\n"\
-        f"<b>{value['14EU']}</b>"
-        await message.answer(news)
-        await message.answer(nik)
+        for key,value in btc_dict.items():
+            nik = f"{hlink(value['title'],value['url'])}\n"
+            news = f"<b>{value['time']}</b>\n"\
+            f"{'₿ → ₱ 📊📊📊'}\n"\
+            f"<u>{value['valueRU']}</u>\n"\
+            f"<b>{value['isoRU']}</b>\n"\
+            f"<b>{value['14RU']}</b>\n"\
+            f"{'₿ → $ 📊📊📊'}\n"\
+            f"<u>{value['valueDL']}</u>\n"\
+            f"<b>{value['isoDL']}</b>\n"\
+            f"<b>{value['14DL']}</b>\n"\
+            f"{'₿ → € 📊📊📊'}\n"\
+            f"<u>{value['valueEU']}</u>\n"\
+            f"<b>{value['isoEU']}</b>\n"\
+            f"<b>{value['14EU']}</b>"
+            await message.answer(news)
+            await message.answer(nik)
+    except:
+        print("Ошибка соединения с сайтом (https://www.vbr.ru/crypto/btc/)")
+        await bot.send_message(message.from_user.id,"В настоящее время сайт с курсом BTC не доступен :( \n Попроубуй чуть-чуть попозже")
         
 #ETH
 
@@ -704,72 +724,80 @@ async def bitocNews (message: types.Message):
     header = {
     'user-agent':"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.167 YaBrowser/22.7.5.940 Yowser/2.5 Safari/537.36"
     }
+    session = requests.Session()
+    retry = Retry(connect=1, backoff_factor=0.5)
+    adapter = HTTPAdapter(max_retries=retry)
     url = ("https://www.vbr.ru/crypto/eth/")
-    r = requests.get (url=url)
-    soup = BeautifulSoup (r.text, "lxml")
-    rounded_block = soup.find(class_="rates-best-table")
+    try:
+        session.mount('https://www.vbr.ru/crypto/eth/',adapter)
+        r = session.get (url=url,verify=True,headers=header,timeout=5)
+        soup = BeautifulSoup (r.text, "lxml")
+        rounded_block = soup.find(class_="rates-best-table")
 
-    #распаршиваем табл
-    roundall = rounded_block.select("tr > td")
+        #распаршиваем табл
+        roundall = rounded_block.select("tr > td")
 
-    #изменение за день
-    isoRU = roundall[2] #isoRU
-    isoDL = roundall[6] #isoDL
-    isoEU = roundall[10] #isoEU
+        #изменение за день
+        isoRU = roundall[2] #isoRU
+        isoDL = roundall[6] #isoDL
+        isoEU = roundall[10] #isoEU
 
-    #курс в рублях/долларах/евро
-    roundRU = roundall[1] #valueRU
-    roundDL = roundall[5] #valueDL
-    roundEU = roundall[9] #valueDL
+        #курс в рублях/долларах/евро
+        roundRU = roundall[1] #valueRU
+        roundDL = roundall[5] #valueDL
+        roundEU = roundall[9] #valueDL
 
-    #изменение за 14 дней
-    is_14RU = roundall[3] #14RU
-    is_14DL = roundall[7] #14DL
-    is_14EU = roundall[11] #14EU
+        #изменение за 14 дней
+        is_14RU = roundall[3] #14RU
+        is_14DL = roundall[7] #14DL
+        is_14EU = roundall[11] #14EU
 
-    #время последней котировка
-    time = soup.find (class_="common-val nowrap") #time
+        #время последней котировка
+        time = soup.find (class_="common-val nowrap") #time
     
-    #словарь с информацией курса биткойна и его последних изменений
-    eth_dict [url]= {
+        #словарь с информацией курса биткойна и его последних изменений
+        eth_dict [url]= {
 
-        "url":url,
-        "title":"Кликни чтобы узнать больше:)",
-        "time":"Котировка за "+time.text,
+            "url":url,
+            "title":"Кликни чтобы узнать больше:)",
+            "time":"Котировка за "+time.text,
 
-        "valueRU":"Курс в рублях: "+roundRU.text,
-        "valueDL":"Курс в долларах: "+roundDL.text,
-        "valueEU":"Курс в евро: "+roundEU.text,
+            "valueRU":"Курс в рублях: "+roundRU.text,
+            "valueDL":"Курс в долларах: "+roundDL.text,
+            "valueEU":"Курс в евро: "+roundEU.text,
 
-        "isoRU":"Изменение за день: "+isoRU.text,
-        "isoDL":"Изменение за день: "+isoDL.text,
-       "isoEU":"Изменение за день: "+isoEU.text,
+            "isoRU":"Изменение за день: "+isoRU.text,
+            "isoDL":"Изменение за день: "+isoDL.text,
+            "isoEU":"Изменение за день: "+isoEU.text,
 
-        "14RU":"Изменение за 14 дней: "+is_14RU.text,
-        "14DL":"Изменение за 14 дней: "+is_14DL.text,
-        "14EU":"Изменение за 14 дней: "+is_14EU.text
-    }
+            "14RU":"Изменение за 14 дней: "+is_14RU.text,
+            "14DL":"Изменение за 14 дней: "+is_14DL.text,
+            "14EU":"Изменение за 14 дней: "+is_14EU.text
+        }
     
-    with open ("eth_dict.json","w",encoding='utf-8') as file:
-        json.dump(eth_dict, file, indent=4, ensure_ascii=False)
+        with open ("eth_dict.json","w",encoding='utf-8') as file:
+            json.dump(eth_dict, file, indent=4, ensure_ascii=False)
 
-    for key,value in eth_dict.items():
-        nik = f"{hlink(value['title'],value['url'])}\n"
-        news = f"<b>{value['time']}</b>\n"\
-        f"{'🔷 → ₱ 📊📊📊'}\n"\
-        f"<u>{value['valueRU']}</u>\n"\
-        f"<b>{value['isoRU']}</b>\n"\
-        f"<b>{value['14RU']}</b>\n"\
-        f"{'🔷 → $ 📊📊📊'}\n"\
-        f"<u>{value['valueDL']}</u>\n"\
-        f"<b>{value['isoDL']}</b>\n"\
-        f"<b>{value['14DL']}</b>\n"\
-        f"{'🔷 → € 📊📊📊'}\n"\
-        f"<u>{value['valueEU']}</u>\n"\
-        f"<b>{value['isoEU']}</b>\n"\
-        f"<b>{value['14EU']}</b>"
-        await message.answer(news)
-        await message.answer(nik)
+        for key,value in eth_dict.items():
+            nik = f"{hlink(value['title'],value['url'])}\n"
+            news = f"<b>{value['time']}</b>\n"\
+            f"{'🔷 → ₱ 📊📊📊'}\n"\
+            f"<u>{value['valueRU']}</u>\n"\
+            f"<b>{value['isoRU']}</b>\n"\
+            f"<b>{value['14RU']}</b>\n"\
+            f"{'🔷 → $ 📊📊📊'}\n"\
+            f"<u>{value['valueDL']}</u>\n"\
+            f"<b>{value['isoDL']}</b>\n"\
+            f"<b>{value['14DL']}</b>\n"\
+            f"{'🔷 → € 📊📊📊'}\n"\
+            f"<u>{value['valueEU']}</u>\n"\
+            f"<b>{value['isoEU']}</b>\n"\
+            f"<b>{value['14EU']}</b>"
+            await message.answer(news)
+            await message.answer(nik)
+    except:
+        print("Ошибка соединения с сайтом (https://www.vbr.ru/crypto/eth/)")
+        await bot.send_message(message.from_user.id,"В настоящее время сайт с курсом ETH не доступен :( \n Попроубуй чуть-чуть попозже")
 
 #LTC
 
@@ -778,72 +806,80 @@ async def bitocNews (message: types.Message):
     header = {
     'user-agent':"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.167 YaBrowser/22.7.5.940 Yowser/2.5 Safari/537.36"
     }
+    session = requests.Session()
+    retry = Retry(connect=1, backoff_factor=0.5)
+    adapter = HTTPAdapter(max_retries=retry)
     url = ("https://www.vbr.ru/crypto/ltc/")
-    r = requests.get (url=url)
-    soup = BeautifulSoup (r.text, "lxml")
-    rounded_block = soup.find(class_="rates-best-table")
+    try:
+        session.mount('https://www.vbr.ru/crypto/ltc/',adapter)
+        r = session.get (url=url,verify=True,headers=header,timeout=5)
+        soup = BeautifulSoup (r.text, "lxml")
+        rounded_block = soup.find(class_="rates-best-table")
 
-    #распаршиваем табл
-    roundall = rounded_block.select("tr > td")
+        #распаршиваем табл
+        roundall = rounded_block.select("tr > td")
 
-    #изменение за день
-    isoRU = roundall[2] #isoRU
-    isoDL = roundall[6] #isoDL
-    isoEU = roundall[10] #isoEU
+        #изменение за день
+        isoRU = roundall[2] #isoRU
+        isoDL = roundall[6] #isoDL
+        isoEU = roundall[10] #isoEU
 
-    #курс в рублях/долларах/евро
-    roundRU = roundall[1] #valueRU
-    roundDL = roundall[5] #valueDL
-    roundEU = roundall[9] #valueDL
+        #курс в рублях/долларах/евро
+        roundRU = roundall[1] #valueRU
+        roundDL = roundall[5] #valueDL
+        roundEU = roundall[9] #valueDL
 
-    #изменение за 14 дней
-    is_14RU = roundall[3] #14RU
-    is_14DL = roundall[7] #14DL
-    is_14EU = roundall[11] #14EU
+        #изменение за 14 дней
+        is_14RU = roundall[3] #14RU
+        is_14DL = roundall[7] #14DL
+        is_14EU = roundall[11] #14EU
 
-    #время последней котировка
-    time = soup.find (class_="common-val nowrap") #time
+        #время последней котировка
+        time = soup.find (class_="common-val nowrap") #time
     
-    #словарь с информацией курса биткойна и его последних изменений
-    ltc_dict [url]= {
+        #словарь с информацией курса биткойна и его последних изменений
+        ltc_dict [url]= {
 
-        "url":url,
-        "title":"Кликни чтобы узнать больше:)",
-        "time":"Котировка за "+time.text,
+            "url":url,
+            "title":"Кликни чтобы узнать больше:)",
+            "time":"Котировка за "+time.text,
 
-        "valueRU":"Курс в рублях: "+roundRU.text,
-        "valueDL":"Курс в долларах: "+roundDL.text,
-        "valueEU":"Курс в евро: "+roundEU.text,
+            "valueRU":"Курс в рублях: "+roundRU.text,
+            "valueDL":"Курс в долларах: "+roundDL.text,
+            "valueEU":"Курс в евро: "+roundEU.text,
 
-        "isoRU":"Изменение за день: "+isoRU.text,
-        "isoDL":"Изменение за день: "+isoDL.text,
-       "isoEU":"Изменение за день: "+isoEU.text,
+            "isoRU":"Изменение за день: "+isoRU.text,
+            "isoDL":"Изменение за день: "+isoDL.text,
+            "isoEU":"Изменение за день: "+isoEU.text,
 
-        "14RU":"Изменение за 14 дней: "+is_14RU.text,
-        "14DL":"Изменение за 14 дней: "+is_14DL.text,
-        "14EU":"Изменение за 14 дней: "+is_14EU.text
-    }
+            "14RU":"Изменение за 14 дней: "+is_14RU.text,
+            "14DL":"Изменение за 14 дней: "+is_14DL.text,
+            "14EU":"Изменение за 14 дней: "+is_14EU.text
+        }
     
-    with open ("ltc_dict.json","w",encoding='utf-8') as file:
-        json.dump(ltc_dict, file, indent=4, ensure_ascii=False)
+        with open ("ltc_dict.json","w",encoding='utf-8') as file:
+            json.dump(ltc_dict, file, indent=4, ensure_ascii=False)
 
-    for key,value in ltc_dict.items():
-        nik = f"{hlink(value['title'],value['url'])}\n"
-        news = f"<b>{value['time']}</b>\n"\
-        f"{'Ł → ₱ 📊📊📊'}\n"\
-        f"<u>{value['valueRU']}</u>\n"\
-        f"<b>{value['isoRU']}</b>\n"\
-        f"<b>{value['14RU']}</b>\n"\
-        f"{'Ł → $ 📊📊📊'}\n"\
-        f"<u>{value['valueDL']}</u>\n"\
-        f"<b>{value['isoDL']}</b>\n"\
-        f"<b>{value['14DL']}</b>\n"\
-        f"{'Ł → € 📊📊📊'}\n"\
-        f"<u>{value['valueEU']}</u>\n"\
-        f"<b>{value['isoEU']}</b>\n"\
-        f"<b>{value['14EU']}</b>"
-        await message.answer(news)
-        await message.answer(nik)
+        for key,value in ltc_dict.items():
+            nik = f"{hlink(value['title'],value['url'])}\n"
+            news = f"<b>{value['time']}</b>\n"\
+            f"{'Ł → ₱ 📊📊📊'}\n"\
+            f"<u>{value['valueRU']}</u>\n"\
+            f"<b>{value['isoRU']}</b>\n"\
+            f"<b>{value['14RU']}</b>\n"\
+            f"{'Ł → $ 📊📊📊'}\n"\
+            f"<u>{value['valueDL']}</u>\n"\
+            f"<b>{value['isoDL']}</b>\n"\
+            f"<b>{value['14DL']}</b>\n"\
+            f"{'Ł → € 📊📊📊'}\n"\
+            f"<u>{value['valueEU']}</u>\n"\
+            f"<b>{value['isoEU']}</b>\n"\
+            f"<b>{value['14EU']}</b>"
+            await message.answer(news)
+            await message.answer(nik)
+    except:
+        print("Ошибка соединения с сайтом (https://www.vbr.ru/crypto/ltc/)")
+        await bot.send_message(message.from_user.id,"В настоящее время сайт с курсом LTC не доступен :( \n Попроубуй чуть-чуть попозже")
 
 #@dp.message_handler (text=['test'])
 
